@@ -5,3 +5,4 @@ bin/
 *.dll
 *.exe
 .DS_Store
+.log.txt
