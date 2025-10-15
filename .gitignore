@@ -1,0 +1,7 @@
+bin/
+*.user
+*.vs
+.vscode/
+*.dll
+*.exe
+.DS_Store
