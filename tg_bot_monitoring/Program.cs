@@ -1,49 +1,54 @@
-﻿using System;
-using System.IO;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Serilog;
 using Telegram.Bot;
 using Configurator.Serilog;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
+using DataBase.Context;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using ChatBot;
+
 
 SerilogConfig.ConfigureLogger();
 Log.Information("start bot");
 
-var builder = new ConfigurationBuilder()
+var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())  // путь к каталогу с appsettings.json
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
 
-IConfiguration config = builder.Build();
-string? token = config["TelegramBotToken"];
+var servCollect = new ServiceCollection();
+
+servCollect.AddDbContext<ApplicationContext>(opt=>{
+ opt.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+});
+
+var ServProv = servCollect.BuildServiceProvider();
+
+var context = ServProv.GetRequiredService<ApplicationContext>();
+
+string? token = configuration["TelegramBotToken"];
 
 using var cts = new CancellationTokenSource();
 
-var bot = new TelegramBotClient(token, cancellationToken: cts.Token);
-
+Telegram.Bot.TelegramBotClient? bot = new TelegramBotClient(token, cancellationToken: cts.Token);
 var me = await bot.GetMe();
-bot.OnMessage += OnMessage;
+
+var commands = new[]
+{
+    new BotCommand { Command = "start", Description = "Начать работу" },
+    new BotCommand { Command = "keybord", Description = "Отоброзить клавиатуру" },
+    new BotCommand { Command = "settings", Description = "Настройки" }
+};
+
+// Установите команды как меню
+// await bot.SendRequest(new SetMyCommandsRequest(commands));
+await bot.SetMyCommands(commands);
+
+
+var ChatBot = new ChatBotServices(bot, context);
+ChatBot.ChatBotMetods();
 
 Console.WriteLine($"@{me.Username} is running... Press Enter to terminate");
 Console.ReadLine();
 cts.Cancel(); // stop the bot
-
-async Task OnMessage(Message msg, UpdateType type)
-{
-    if (msg.Text is null) return;	// we only handle Text messages here
-    Console.WriteLine($"Received {type} '{msg.Text}' in {msg.Chat}");
-    // let's echo back received text in the chat
-    await bot.SendMessage(msg.Chat.Id, $" said: {msg.Text}");
-}
-
-
-
-
-
-
-
-
-
-
-
- 
