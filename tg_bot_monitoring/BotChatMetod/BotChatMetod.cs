@@ -6,8 +6,6 @@ using Telegram.Bot.Polling;
 using DataBase.Context;
 using ChatBot.Response;
 using DataBase.DataAccess;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
-using System.Diagnostics;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace ChatBot
@@ -54,7 +52,7 @@ namespace ChatBot
                         Log.Information("Start chat chatid =" + msg.Chat.Id + " username=@" + msg.Chat.Username);
                         await _bot.SendMessage(msg.Chat, "Здравствуйте, данный бот позволит вам мониторить ваши серверы");
                         await ChatBotResponse.ResponseKeyBoard(msg, type, _bot);
-                        await dataAccess.PushUsersData(msg);
+                        await dataAccess.PushDataChat(msg.Chat.Id);
                         break;
                     case "Добавить сервер":
                         await _bot.SendMessage(msg.Chat.Id, "Введите ключ (ответом на это сообщение):", replyMarkup: new ForceReplyMarkup { Selective = true });
@@ -72,7 +70,7 @@ namespace ChatBot
             {
                 if (msg.ReplyToMessage.Text == "Введите ключ (ответом на это сообщение):")
                 {
-                    await dataAccess.PushSshKeyData(msg);
+                    await dataAccess.PushDataSSh(msg);
                 }
             }
 
