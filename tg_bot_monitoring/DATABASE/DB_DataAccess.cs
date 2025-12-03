@@ -3,6 +3,7 @@ using DataBase.Context;
 using Telegram.Bot.Types;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Security.Cryptography;
 
 namespace DataBase.DataAccess
 {
